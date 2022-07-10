@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+
+    <title>ASC 2022 Tracker</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico?">
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <style>
+        html,
+        body,
+        #map-canvas {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+        }
+    </style>
+
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script> -->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script>
+
+        const map_start = new google.maps.LatLng(38.890248, -94.609152);
+
+        var map;
+        var team_markers = {};
+
+        var vehicle_icons = {
+            MN: {
+                icon: {
+
+                },
+                name: "Minnesota"
+            },
+            MN1: {
+                icon: "./images/beachflag.png",
+                name: "Minnesota"
+            },
+            MN2: {
+                icon: "./images/beachflag.png",
+                name: "Minnesota"
+            }
+        };
+
+        var vehicle_following = null;
+
+
+        function init_legend() {
+
+            const legend = document.getElementById("legend");
+
+            for (const key in vehicle_icons) {
+                const type = vehicle_icons[key];
+                const name = type.name;
+                const icon = type.icon;
+                const div = document.createElement("div");
+
+                div.innerHTML = '<img src="' + icon + '"> ' + name;
+                legend.appendChild(div);
+            }
+
+            map.controls[google.maps.ControlPosition.LEFT_TOP].push(legend);
+
+        }
+
+        function initialize() {
+
+            var mapOptions = {
+                zoom: 5,
+                center: map_start
+            };
+
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+            init_legend();
+
+
+            window.addEventListener('keydown', event => {
+                if (event.key !== 'Escape') return;
+                event.stopPropagation();
+                // Handle the event.
+                console.log("esc");
+                vehicle_following = null;
+            }, /* useCapture= */ true);
+
+            // map.addListener('bounds_changed', function () {
+            //     vehicle_following = null;
+            // });
+
+        }
+
+
+
+        google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+</head>
+
+<body>
+    <div id="map-canvas"></div>
+    <div id="legend">
+        <h3>Legend</h3>
+    </div>
+</body>
+<script>
+    const delay = 5000;
+
+    /* Function factory that stores closure to specific marker. */
+    function get_marker_click_callback(marker) {
+        return function () {
+            if (vehicle_following == marker.key) {
+                vehicle_following = null;
+            }
+            else {
+                vehicle_following = marker.key
+                console.log(marker.title)
+            }
+        }
+    }
+
+    function get_team_loc(curr_team_data) {
+        const loc = new google.maps.LatLng(curr_team_data["latitude"], curr_team_data["longitude"]);
+        return loc;
+    }
+
+    function new_team_marker(curr_team_data) {
+        team_marker = new google.maps.Marker({
+            position: get_team_loc(curr_team_data),
+            map: map,
+            title: curr_team_data['name'],
+            icon: "images/beachflag.png"
+        });
+
+        team_marker.addListener("click", get_marker_click_callback(team_marker));
+
+        return team_marker;
+    }
+
+
+    function callDone(data) {
+
+        console.log(data);
+
+        for (const key in data) {
+            const team_uid = key
+            const curr_team_data = data[key]
+
+            if (!(key in team_markers)) {
+                team_markers[key] = new_team_marker(curr_team_data);
+                team_markers[key].key = key
+            }
+            else {
+                team_markers[key].setPosition(get_team_loc(curr_team_data));
+            }
+
+            if (vehicle_following != null && vehicle_following == key) {
+                map.setCenter(get_team_loc(curr_team_data))
+            }
+        }
+
+        setTimeout(updatePosition, delay);
+    }
+
+    function updatePosition() {
+        $.ajax({
+            url: 'https://fulll-send.herokuapp.com',
+            dataType: 'json',
+            async: true,
+            crossDomain: true,
+        }).done(callDone);
+    }
+    // call the function initally
+    updatePosition();
+</script>
+
+</html>
