@@ -6,7 +6,7 @@
     <meta charset="utf-8">
 
     <title>ASC 2022 Tracker</title>
-    <link rel="icon" type="image/x-icon" href="/images/favicon.ico?">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="./style.css" />
     <style>
         html,
@@ -18,8 +18,8 @@
         }
     </style>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script>
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script> -->
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script> -->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
     <script>
@@ -88,17 +88,22 @@
             return svg;
         }
 
-        function add_to_lengend(svg_marker, name, key) {
+        function add_to_lengend(svg_marker, name, key, team_marker) {
             const legend = map.controls[legend_position].getAt(legend_idx);
 
             const div = document.createElement("div");
 
 
             div.appendChild(svg_marker)
-            div.innerHTML += name;
+            const text = document.createElement("text");
+            text.innerHTML = name
+            text.style.userSelect = "none"
+            div.appendChild(text)
 
             div.onclick = get_marker_click_callback(key, div);
             div.title = "Follow Vehicle"
+            div.style.cursor = "pointer"
+            team_marker.legend_div = div
 
             console.log(div.innerHTML)
 
@@ -117,12 +122,24 @@
 
             var mapOptions = {
                 zoom: 5,
-                center: map_start
+                center: map_start,
+                streetViewControl: false
             };
 
             map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
             init_legend();
+
+            const iosix = document.getElementById("iosix");
+            iosix.style.cursor = "pointer";
+            iosix.onclick = function () { window.open(iosix_site) };
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(iosix);
+
+
+            const asc = document.getElementById("asc");
+            asc.style.cursor = "pointer";
+            asc.onclick = function () { window.open(asc_site) };
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(asc);
 
 
             window.addEventListener('keydown', event => {
@@ -156,6 +173,13 @@
     <div id="legend">
         <h3>Legend</h3>
     </div>
+    <div id="iosix">
+        <img src="images/iosi_sponsor.png" alt="IOSiX" style="width:100px;height:auto;">
+    </div>
+    <div id="asc">
+        <img src="images/asc.png" alt="American Solar Challenge" style="width:100px;height:auto;">
+    </div>
+
 </body>
 <script>
     const delay = 5000;
@@ -163,23 +187,54 @@
     /* Threshold for determining whether a team's tracker is online (in seconds) */
     const online_threshold = 120;
 
+    const iosix_site = "https://iosix.com/"
+    const asc_site = "https://americansolarchallenge.org/"
+
+    function unfollow_marker(marker_key) {
+        team_markers[marker_key].legend_div.title = "Follow Vehicle"
+        team_markers[marker_key].legend_div.style.background = ""
+    }
+
     /* Function factory that stores closure to specific marker. */
     function get_marker_click_callback(marker_key, div) {
         return function () {
             console.log("in callback: " + vehicle_following + ", key: " + marker_key)
             if (vehicle_following == marker_key) {
                 vehicle_following = null;
-                div.title = "Follow Vehicle"
+                unfollow_marker(marker_key, div);
                 console.log(div.title)
             }
             else {
+                console.log("vehicle not following me")
+                console.log(vehicle_following)
+                if (vehicle_following != null) {
+                    unfollow_marker(vehicle_following);
+                }
                 vehicle_following = marker_key
                 div.title = "Unfollow Vehicle"
+                div.style.background = "LightGray"
                 console.log(div.title)
                 set_map_to_team(marker_key)
             }
         }
     }
+
+    /* Function factory that stores closure to specific marker. */
+    function get_marker_click_callback_info_window(marker_key) {
+        return function () {
+            team_markers[marker_key].info_window.open({
+                anchor: team_markers[marker_key],
+                map,
+                shouldFocus: false,
+            });
+
+            google.maps.event.addListenerOnce(map, "click", function (event) {
+                team_markers[marker_key].info_window.close();
+            });
+
+        }
+    }
+
 
     function get_team_loc(curr_team_data) {
         const loc = new google.maps.LatLng(curr_team_data["latitude"], curr_team_data["longitude"]);
@@ -192,20 +247,29 @@
         var legend_icon = team_icon;
         team_icon.rotation = parseInt(curr_team_data['course'])
         console.log('Team: ' + curr_team_data['name'] + ', Color: ' + team_icon.fillColor)
+        number = curr_team_data['name'].split(" ", 1)[0]
+        if (isNaN(number)) { number = "" }
         team_marker = new google.maps.Marker({
             position: get_team_loc(curr_team_data),
             map: map,
             title: curr_team_data['name'],
+            // label: {
+            //     text: number,
+            //     color: 'black',
+            //     fontSize: "8px"
+            // },
             icon: team_icon,
         });
+
+        team_marker.info_window = new google.maps.InfoWindow({ content: curr_team_data["name"] + "<br />" + curr_team_data["status"] })
 
         console.log(generic_icon.path);
 
         // Gotta figure out how to get the actual SVG from this icon.
-        add_to_lengend(make_team_marker(curr_team_data), curr_team_data['name'], key)
+        add_to_lengend(make_team_marker(curr_team_data), curr_team_data['name'], key, team_marker)
 
 
-        // team_marker.addListener("click", get_marker_click_callback(team_marker));
+        team_marker.addListener("click", get_marker_click_callback_info_window(key));
 
         return team_marker;
     }
@@ -250,6 +314,7 @@
             else {
                 team_markers[key].setPosition(get_team_loc(curr_team_data));
                 set_team_rotation(team_markers[key], curr_team_data)
+                team_markers[key].info_window.setContent(curr_team_data["name"] + "<br />" + curr_team_data["status"])
             }
 
             team_markers[key].team_data = curr_team_data;
