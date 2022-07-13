@@ -261,7 +261,7 @@
             icon: team_icon,
         });
 
-        team_marker.info_window = new google.maps.InfoWindow({ content: curr_team_data["name"] + "<br />" + curr_team_data["status"] })
+        team_marker.info_window = new google.maps.InfoWindow({ content: curr_team_data["name"] + "<br />" + curr_team_data["status"], disableAutoPan: true })
 
         console.log(generic_icon.path);
 
