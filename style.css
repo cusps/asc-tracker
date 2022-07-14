@@ -14,17 +14,40 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden
+}
+
+head {
+    overflow: hidden;
+}
+
+#legend_heading {
+    border: 0px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+    height: auto;
+    width: auto;
+    color: dimgray;
+}
+
+.legend_hover :hover {
+    color: black;
 }
 
 #legend {
+    position: absolute;
     font-family: Arial, sans-serif;
     background: #fff;
     padding: 10px;
     margin: 10px;
-    border: 3px solid #000;
-    overflow: hidden;
+    border: 0px solid #000;
+    overflow-x: hidden;
+    overflow-y: hidden;
     height: auto;
     width: auto;
+    border-radius: 2px;
 }
 
 #legend h3 {
