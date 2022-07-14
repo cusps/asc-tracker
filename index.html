@@ -33,6 +33,12 @@
 
         const marker_svg_path = "M 0 -6 L -5 6 L 0 3 L 5 6 Z";
 
+        const marker_svg_egg_path = "M 3.12 -3.28 C 2.24 -4.88 1.04 -5.84 -0.08 -5.84 S -2.4 -4.96 -3.28 -3.28 C -4 -1.92 -4.56 -0.24 -4.56 1.04 C -4.56 2.24 -4.08 3.44 -3.28 4.24 C -2.4 5.12 -1.28 5.6 -0.08 5.6 S 2.24 5.12 3.12 4.24 C 3.92 3.36 4.4 2.24 4.4 1.04 C 4.4 -0.16 3.92 -1.92 3.12 -3.28 Z Z"
+        const eggshell_color = "#f0e4d6"//"#F0EAD6";
+        const eggshell_thickness = 2;
+
+        var mn_follow_count = 0;
+        const mn_follow_thresh = 5;
 
         const generic_icon = {
 
@@ -146,6 +152,32 @@
         }
 
         var ctaLayer;
+        var current_string = "";
+
+        function set_egg(marker) {
+
+
+            const legend_children = marker.legend_div.children;
+
+            var legend_icon_egg;
+
+            for (i = 0; i < legend_children.length; i++) {
+                if (legend_children[i].id == "marker") {
+                    legend_icon_egg = legend_children[i];
+                }
+            }
+
+            marker.icon.path = marker_svg_egg_path;
+            marker.icon.fillColor = eggshell_color;
+
+            var icon_path = legend_icon_egg.children[0];
+            console.log(legend_icon_egg)
+            console.log(icon_path)
+            icon_path.setAttribute("d", marker_svg_egg_path)
+            icon_path.setAttribute("fill", eggshell_color)
+
+            marker.title = "35 EGG"
+        }
 
         function initialize() {
 
@@ -175,11 +207,29 @@
 
 
             window.addEventListener('keydown', event => {
-                if (event.key !== 'Escape') return;
-                event.stopPropagation();
-                // Handle the event.
-                console.log("esc");
-                vehicle_following = null;
+                console.log(event.key)
+                if (event.key == "Escape") {
+                    event.stopPropagation();
+                    // Handle the event.
+                    console.log("esc");
+                    vehicle_following = null;
+                    current_string = "";
+                }
+                else if (typeof (event.key) === "string" && event.key.length === 1 && event.key.match(/[a-z]/i)) {
+                    event.stopPropagation();
+                    current_string = current_string + event.key
+                    if (current_string == "egg") {
+                        console.log("EGGGGGG")
+                        for (const key in team_markers) {
+                            if (team_markers[key]["title"].includes("Minnesota")) {
+                                set_egg(team_markers[key])
+                            }
+                        }
+
+                    }
+                }
+
+
             }, /* useCapture= */ true);
 
             ctaLayer = new google.maps.KmlLayer(
@@ -244,6 +294,12 @@
                 div.title = "Unfollow Vehicle"
                 div.style.background = "LightGray"
                 set_map_to_team(marker_key)
+                if (team_markers[marker_key]["title"] == "35 Minnesota") {
+                    mn_follow_count++;
+                }
+                if (mn_follow_count == mn_follow_thresh) {
+                    set_egg(team_markers[marker_key])
+                }
             }
         }
     }
@@ -321,16 +377,16 @@
         }
 
         if (!online) {
-            marker.icon.fillOpacity = 0.2;
+            marker.icon.fillOpacity = 0.5;
             marker.icon.strokeWeight = 0.0;
-            legend_icon.style.fillOpacity = 0.2;
+            legend_icon.style.fillOpacity = 0.5;
             legend_icon.setAttribute("stroke-width", 0.0);
         }
         else {
             marker.icon.fillOpacity = generic_icon.fillOpacity;
             marker.icon.strokeWeight = generic_icon.strokeWeight;
             legend_icon.style.fillOpacity = generic_icon.fillOpacity;
-            legend_icon.setAttribute("stroke-width", generic_icon.strokeWeight);
+            legend_icon.setAttribute("stroke-width", 1);
         }
     }
 
