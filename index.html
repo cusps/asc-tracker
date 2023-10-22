@@ -18,7 +18,7 @@
         }
     </style>
 
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script> -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
@@ -236,6 +236,7 @@
             ctaLayer = new google.maps.KmlLayer(
                 "https://cusps.github.io/asc-tracker/wsc2023_route.kml", { preserveViewport: true }
             );
+            console.log("set map");
             ctaLayer.setMap(map);
 
             // map.addListener('bounds_changed', function () {
@@ -417,8 +418,6 @@
 
 
         for (const team of data) {
-            console.log("team")
-            console.log(team)
             teamnum = team["teamnum"]
             teamnum = Number(teamnum);
 
@@ -438,7 +437,6 @@
 
             if (first_load && is_online(team) && team["team"] != "EMT") {
                 bounds_count = bounds_count + 1;
-                console.log("adding position")
                 bounds.extend(team_markers[teamnum].getPosition())
             }
 
@@ -457,6 +455,7 @@
                 map.fitBounds(bounds);
             }
             else {
+                // TODO: idk what this shit does.
                 function on_stat_change() {
                     console.log("status changed")
                     console.log(ctaLayer.getDefaultViewport());
