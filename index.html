@@ -5,7 +5,7 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
 
-    <title>ASC 2022 Tracker</title>
+    <title>WSC 2023 Tracker</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="./style.css" />
     <style>
@@ -103,7 +103,7 @@
 
         }
 
-        function make_team_marker(curr_team_data) {
+        function make_team_marker(team) {
             var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
@@ -117,14 +117,14 @@
             svg.setAttribute("id", "marker")
 
             path.setAttribute('d', marker_svg_path);
-            path.setAttribute('fill', curr_team_data['color']);
+            path.setAttribute('fill', team['color']);
 
             svg.appendChild(path);
 
             return svg;
         }
 
-        function add_to_lengend(svg_marker, name, key, team_marker) {
+        function add_to_lengend(svg_marker, name, teamnum, team_marker) {
             const legend = map.controls[legend_position].getAt(legend_idx);
 
             const div = document.createElement("div");
@@ -136,7 +136,7 @@
             text.style.userSelect = "none"
             div.appendChild(text)
 
-            div.onclick = get_marker_click_callback(key, div);
+            div.onclick = get_marker_click_callback(teamnum, div);
             div.title = "Follow Vehicle"
             div.style.cursor = "pointer"
             team_marker.legend_div = div
@@ -148,7 +148,8 @@
         }
 
         function get_map_start() {
-            return { lat: 38.890248, lng: -94.609152 }
+            // return { lat: 38.890248, lng: -94.609152 }
+            return { lat: -24.1308539, lng: 134.3255761 }
         }
 
         var ctaLayer;
@@ -233,7 +234,7 @@
             }, /* useCapture= */ true);
 
             ctaLayer = new google.maps.KmlLayer(
-                "https://cusps.github.io/asc-tracker/ASC_2022_Official_Route.kmz", { preserveViewport: true }
+                "https://cusps.github.io/asc-tracker/wsc2023_route.kml", { preserveViewport: true }
             );
             ctaLayer.setMap(map);
 
@@ -266,7 +267,8 @@
 
 </body>
 <script>
-    const delay = 5000;
+    const delay = 5000; // 5s
+    const race = "WSC";
 
     /* Threshold for determining whether a team's tracker is online (in seconds) */
     const online_threshold = 120;
@@ -321,23 +323,26 @@
     }
 
 
-    function get_team_loc(curr_team_data) {
-        const loc = new google.maps.LatLng(curr_team_data["latitude"], curr_team_data["longitude"]);
+    function get_team_loc(team) {
+        console.log(team);
+        const loc = new google.maps.LatLng(team["latitude"], team["longitude"]);
         return loc;
     }
 
-    function new_team_marker(curr_team_data, key) {
+    function new_team_marker(team, teamnum) {
+        console.log("new_team_marker");
+        console.log(team);
         var team_icon = generic_icon;
-        team_icon.fillColor = curr_team_data['color']
+        team_icon.fillColor = "blue" //team['color']
         var legend_icon = team_icon;
-        team_icon.rotation = parseInt(curr_team_data['course'])
-        console.log('Team: ' + curr_team_data['name'] + ', Color: ' + team_icon.fillColor)
-        number = curr_team_data['name'].split(" ", 1)[0]
+        team_icon.rotation = 0; //parseInt(team['course'])
+        console.log('Team: ' + team['team']); // + ', Color: ' + team_icon.fillColor)
+        number = team['teamnum']
         if (isNaN(number)) { number = "" }
         team_marker = new google.maps.Marker({
-            position: get_team_loc(curr_team_data),
+            position: get_team_loc(team),
             map: map,
-            title: curr_team_data['name'],
+            title: team['team'],
             // label: {
             //     text: number,
             //     color: 'black',
@@ -346,25 +351,25 @@
             icon: team_icon,
         });
 
-        team_marker.info_window = new google.maps.InfoWindow({ content: curr_team_data["name"] + "<br />" + curr_team_data["status"], disableAutoPan: true })
+        team_marker.info_window = new google.maps.InfoWindow({ content: team["team"] + "<br />" + team["status"], disableAutoPan: true })
 
 
         // Gotta figure out how to get the actual SVG from this icon.
-        add_to_lengend(make_team_marker(curr_team_data), curr_team_data['name'], key, team_marker)
+        add_to_lengend(make_team_marker(team), team['team'], teamnum, team_marker)
 
 
-        team_marker.addListener("click", get_marker_click_callback_info_window(key));
+        team_marker.addListener("click", get_marker_click_callback_info_window(teamnum));
 
         return team_marker;
     }
 
-    function is_online(curr_team_data) {
-        return curr_team_data["deltatime"] < online_threshold;
+    function is_online(team) {
+        return true; //team["deltatime"] < online_threshold;
     }
 
-    function set_team_online(marker, curr_team_data) {
+    function set_team_online(marker, team) {
         /* Look at time since last datapoint (in seconds) */
-        const online = is_online(curr_team_data);
+        const online = is_online(team);
 
         const legend_children = marker.legend_div.children;
 
@@ -390,50 +395,55 @@
         }
     }
 
-    function set_team_rotation(marker, curr_team_data) {
+    function set_team_rotation(marker, team) {
         var icon = marker.getIcon();
-        icon.rotation = parseInt(curr_team_data['course']);
+        icon.rotation = 0 //parseInt(team['course']);
         marker.setIcon(icon);
     }
 
     function set_map_to_team(team_key) {
-        const curr_team_data = team_markers[team_key].team_data;
-        map.setCenter(get_team_loc(curr_team_data));
+        const team = team_markers[team_key].team_data;
+        map.setCenter(get_team_loc(team));
     }
 
     function callDone(data) {
+
+        data = data["items"]
 
         console.log(data);
 
         var bounds = new google.maps.LatLngBounds();
         var bounds_count = 0;
 
-        for (const key in data) {
-            const team_uid = key
-            const curr_team_data = data[key]
 
-            if (!(key in team_markers)) {
-                team_markers[key] = new_team_marker(curr_team_data, key);
-                team_markers[key].key = key
+        for (const team of data) {
+            console.log("team")
+            console.log(team)
+            teamnum = team["teamnum"]
+            teamnum = Number(teamnum);
+
+            if (!(teamnum in team_markers)) {
+                team_markers[teamnum] = new_team_marker(team, teamnum);
+                team_markers[teamnum].teamnum = teamnum
             }
             else {
-                team_markers[key].setPosition(get_team_loc(curr_team_data));
-                set_team_rotation(team_markers[key], curr_team_data)
-                team_markers[key].info_window.setContent(curr_team_data["name"] + "<br />" + curr_team_data["status"])
+                team_markers[teamnum].setPosition(get_team_loc(team));
+                set_team_rotation(team_markers[teamnum], team)
+                team_markers[teamnum].info_window.setContent(team["team"] + "<br />Distance from Darwin: " + team["distance"] + "mi.")
             }
 
-            team_markers[key].team_data = curr_team_data;
+            team_markers[teamnum].team_data = team;
 
-            set_team_online(team_markers[key], curr_team_data)
+            set_team_online(team_markers[teamnum], team)
 
-            if (first_load && is_online(curr_team_data) && curr_team_data["name"] != "EMT") {
+            if (first_load && is_online(team) && team["team"] != "EMT") {
                 bounds_count = bounds_count + 1;
                 console.log("adding position")
-                bounds.extend(team_markers[key].getPosition())
+                bounds.extend(team_markers[teamnum].getPosition())
             }
 
-            if (vehicle_following != null && vehicle_following == key) {
-                set_map_to_team(key)
+            if (vehicle_following != null && vehicle_following == teamnum) {
+                set_map_to_team(teamnum)
             }
 
         }
@@ -466,7 +476,7 @@
 
     function updatePosition() {
         $.ajax({
-            url: 'https://fulll-send.herokuapp.com',
+            url: 'https://telemetry.worldsolarchallenge.org/wscearth/api/positions',
             dataType: 'json',
             async: true,
             crossDomain: true,
