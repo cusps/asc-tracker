@@ -18,16 +18,12 @@
         }
     </style>
 
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script> -->
-
-    <script>(g => { var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {}); var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => { await (a = m.createElement("script")); e.set("libraries", [...r] + ""); for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]); e.set("callback", c + ".maps." + q); a.src = `https://maps.${c}apis.com/maps/api/js?` + e; d[q] = f; a.onerror = () => h = n(Error(p + " could not load.")); a.nonce = m.querySelector("script[nonce]")?.nonce || ""; m.head.append(a) })); d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)) })
-            ({ key: "AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w", v: "weekly" });</script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb_CMjnm_1uymDFU-3gn5hAPEjUi7am6w"></script>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
     <script>
 
-        // var { map } = await google.maps.importLibrary("maps");
 
         var map;
         var team_markers = {};
@@ -238,7 +234,8 @@
             }, /* useCapture= */ true);
 
             ctaLayer = new google.maps.KmlLayer(
-                "https://cusps.github.io/asc-tracker/wsc2023_route.kml", { preserveViewport: true }
+                "https://telemetry.worldsolarchallenge.org/wscearth/route4.kml", { preserveViewport: true }
+                // "https://cusps.github.io/solar-car-tracker/wsc2023_route.kml", { preserveViewport: true }
             );
             console.log("set map");
             ctaLayer.setMap(map);
